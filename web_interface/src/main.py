@@ -4,7 +4,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory, session
-from flask_sqlalchemy import SQLAlchemy
+from src.database import db
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = 'paraguai-price-extractor-2024-secret-key'
@@ -17,10 +17,10 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_TYPE'] = 'filesystem'
 
-# Instância única do SQLAlchemy
-db = SQLAlchemy(app)
+# Inicializa banco de dados
+db.init_app(app)
 
-# Importa modelos e rotas após inicializar db
+# Importa rotas
 from src.routes.user import user_bp
 from src.routes.auth import auth_bp
 from src.routes.search_wizard import search_wizard_bp
