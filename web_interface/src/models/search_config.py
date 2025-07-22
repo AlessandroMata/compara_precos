@@ -1,10 +1,8 @@
 """
 Modelos de banco de dados para configurações de busca e produtos salvos
 """
-from flask_sqlalchemy import SQLAlchemy
+from ..main import db
 from datetime import datetime
-
-db = SQLAlchemy()
 
 class SearchConfig(db.Model):
     """
