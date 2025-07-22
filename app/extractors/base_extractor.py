@@ -16,15 +16,21 @@ class BaseExtractor(ABC):
     """Classe base para todos os extratores de sites paraguaios"""
     
     def __init__(self):
-        # Configuração para Firecrawl local ou externo
-        firecrawl_api_key = os.getenv('FIRECRAWL_API_KEY', 'local-instance')
+        # Configuração para Firecrawl local ou fallback
+        firecrawl_api_key = os.getenv('FIRECRAWL_API_KEY', 'local-fallback')
         firecrawl_base_url = os.getenv('FIRECRAWL_BASE_URL', 'http://localhost:3002')
         
-        # Se tiver URL base personalizada, usar instância local
-        if firecrawl_base_url and firecrawl_base_url != 'https://api.firecrawl.dev':
-            self.firecrawl = FirecrawlApp(api_key=firecrawl_api_key, api_url=firecrawl_base_url)
-        else:
-            self.firecrawl = FirecrawlApp(api_key=firecrawl_api_key)
+        # Inicializa Firecrawl com fallback
+        try:
+            if firecrawl_base_url and firecrawl_base_url != 'https://api.firecrawl.dev':
+                self.firecrawl = FirecrawlApp(api_key=firecrawl_api_key, api_url=firecrawl_base_url)
+            else:
+                self.firecrawl = FirecrawlApp(api_key=firecrawl_api_key)
+            self.firecrawl_available = True
+        except Exception as e:
+            logger.warning(f"Firecrawl not available: {e}")
+            self.firecrawl = None
+            self.firecrawl_available = False
             
         # Cliente OpenAI/OpenRouter para análise IA (opcional)
         openai_key = os.getenv('OPENROUTER_API_KEY')
