@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # Firecrawl local - substitui a API externa
+  firecrawl:
+    image: mendableai/firecrawl:latest
+    ports:
+      - "3002:3002"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - PLAYWRIGHT_MICROSERVICE_URL=http://playwright-service:3000
+    depends_on:
+      - redis
+    networks:
+      - paraguai_network
+
+  # Redis para Firecrawl e cache do sistema
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - paraguai_network
+
+  # PostgreSQL para armazenamento principal
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: paraguai_db
+      POSTGRES_USER: paraguai_user
+      POSTGRES_PASSWORD: paraguai_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - paraguai_network
+
+  # Aplicação principal (Flask web interface)
+  web-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - FIRECRAWL_API_KEY=local-instance
+      - FIRECRAWL_BASE_URL=http://firecrawl:3002
+      - OPENROUTER_API_KEY=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
+      - OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+      - OPENROUTER_MODEL=cognitivecomputations/dolphin-mistral-24b-venice-edition:free
+      - DATABASE_URL=postgresql://paraguai_user:paraguai_pass@postgres:5432/paraguai_db
+      - REDIS_URL=redis://redis:6379
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+      - redis
+      - firecrawl
+    networks:
+      - paraguai_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  paraguai_network:
+    driver: bridge
