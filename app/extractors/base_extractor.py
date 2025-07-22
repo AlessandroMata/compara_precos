@@ -230,12 +230,48 @@ class BaseExtractor(ABC):
         
         return data
     
-    def wait_between_requests(self):
+    def download_and_encode_image(self, image_url: str) -> Optional[str]:
         """
-        Aguarda entre requisições para evitar sobrecarga
+        Baixa uma imagem e converte para base64
         """
-        if self.delay > 0:
-            time.sleep(self.delay)
+        try:
+            logger.info(f"Downloading image: {image_url}")
+            import requests
+            import base64
+            from PIL import Image
+            from io import BytesIO
+            
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            
+            response = requests.get(image_url, headers=headers, timeout=30)
+            response.raise_for_status()
+            
+            # Abre e redimensiona a imagem
+            image = Image.open(BytesIO(response.content))
+            
+            # Redimensiona para economizar espaço (máximo 400x400)
+            image.thumbnail((400, 400), Image.Resampling.LANCZOS)
+            
+            # Converte para RGB se necessário
+            if image.mode in ('RGBA', 'LA', 'P'):
+                image = image.convert('RGB')
+            
+            # Salva como JPEG em memória
+            buffer = BytesIO()
+            image.save(buffer, format='JPEG', quality=85)
+            buffer.seek(0)
+            
+            # Converte para base64
+            image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            
+            logger.info(f"Image downloaded and encoded: {len(image_base64)} characters")
+            return f"data:image/jpeg;base64,{image_base64}"
+            
+        except Exception as e:
+            logger.error(f"Error downloading image {image_url}: {str(e)}")
+            return None
     
     def retry_on_failure(self, func, *args, **kwargs):
         """
