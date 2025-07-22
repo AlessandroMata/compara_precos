@@ -6,14 +6,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from flask import Flask, send_from_directory, session
 from flask_sqlalchemy import SQLAlchemy
 
-# Instância única do SQLAlchemy
-db = SQLAlchemy()
-
-# Importa modelos após criar db
-from src.routes.user import user_bp
-from src.routes.auth import auth_bp
-from src.routes.search_wizard import search_wizard_bp
-
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
 app.config['SECRET_KEY'] = 'paraguai-price-extractor-2024-secret-key'
 
@@ -25,8 +17,13 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_TYPE'] = 'filesystem'
 
-# Inicializa banco de dados
-db.init_app(app)
+# Instância única do SQLAlchemy
+db = SQLAlchemy(app)
+
+# Importa modelos e rotas após inicializar db
+from src.routes.user import user_bp
+from src.routes.auth import auth_bp
+from src.routes.search_wizard import search_wizard_bp
 
 # Registra blueprints
 app.register_blueprint(user_bp, url_prefix='/api')
@@ -34,11 +31,14 @@ app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(search_wizard_bp, url_prefix='/api/search-wizard')
 
 with app.app_context():
+    # Importa e cria modelos
+    from src.models.auth import User, Session, create_default_user
+    from src.models.search_config import SearchConfig, SavedProduct, MonitoringLog, ImageDownload, SocialPost
+    
     # Cria todas as tabelas
     db.create_all()
     
     # Cria usuário padrão
-    from src.models.auth import create_default_user
     create_default_user()
 
 @app.route('/', defaults={'path': ''})
