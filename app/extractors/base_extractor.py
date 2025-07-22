@@ -17,29 +17,40 @@ class BaseExtractor(ABC):
     
     def __init__(self):
         # Configuração para Firecrawl local ou fallback
-        firecrawl_api_key = os.getenv('FIRECRAWL_API_KEY', 'local-fallback')
+        firecrawl_api_key = os.getenv('FIRECRAWL_API_KEY', 'local-instance-key')
         firecrawl_base_url = os.getenv('FIRECRAWL_BASE_URL', 'http://localhost:3002')
         
-        # Inicializa Firecrawl com fallback
+        # Inicializa Firecrawl com configuração Docker
         try:
-            if firecrawl_base_url and firecrawl_base_url != 'https://api.firecrawl.dev':
+            if firecrawl_base_url and 'localhost' not in firecrawl_base_url:
+                # Configuração Docker
+                logger.info(f"Initializing Firecrawl with Docker URL: {firecrawl_base_url}")
                 self.firecrawl = FirecrawlApp(api_key=firecrawl_api_key, api_url=firecrawl_base_url)
             else:
+                # Configuração local
+                logger.info("Initializing Firecrawl for local development")
                 self.firecrawl = FirecrawlApp(api_key=firecrawl_api_key)
             self.firecrawl_available = True
+            logger.info("✅ Firecrawl initialized successfully")
         except Exception as e:
-            logger.warning(f"Firecrawl not available: {e}")
+            logger.warning(f"⚠️ Firecrawl not available: {e}")
             self.firecrawl = None
             self.firecrawl_available = False
             
-        # Cliente OpenAI/OpenRouter para análise IA (opcional)
+        # Cliente OpenRouter para análise IA
         openai_key = os.getenv('OPENROUTER_API_KEY')
         if openai_key:
-            self.openai_client = OpenAI(
-                base_url=os.getenv('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1'),
-                api_key=openai_key
-            )
+            try:
+                self.openai_client = OpenAI(
+                    base_url=os.getenv('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1'),
+                    api_key=openai_key
+                )
+                logger.info("✅ OpenRouter IA initialized successfully")
+            except Exception as e:
+                logger.error(f"❌ Error initializing OpenRouter: {e}")
+                self.openai_client = None
         else:
+            logger.warning("⚠️ OPENROUTER_API_KEY not found")
             self.openai_client = None
         self.ai_model = os.getenv('OPENROUTER_MODEL', 'cognitivecomputations/dolphin-mistral-24b-venice-edition:free')
         self.site_url = os.getenv('SITE_URL', 'https://paraguai-price-extractor.com')
