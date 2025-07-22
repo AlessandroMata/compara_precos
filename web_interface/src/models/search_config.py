@@ -1,7 +1,7 @@
 """
 Modelos de banco de dados para configurações de busca e produtos salvos
 """
-from ..main import db
+from ..database import db
 from datetime import datetime
 
 class SearchConfig(db.Model):
