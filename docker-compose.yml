@@ -1,19 +1,36 @@
 version: '3.8'
 
 services:
-  # Firecrawl local - substitui a API externa
+  # Firecrawl local - web scraping
   firecrawl:
     image: mendableai/firecrawl:latest
     ports:
       - "3002:3002"
     environment:
-      - REDIS_URL=redis://redis:6379
+      - PORT=3002
+      - REDIS_URL=redis://redis:6379/0
+      - PLAYWRIGHT_MICROSERVICE_URL=http://playwright-service:3000
+      - SCRAPE_QUEUE_NAME=scrape-queue
     depends_on:
       - redis
+      - playwright-service
     networks:
       - paraguai_network
+    restart: unless-stopped
 
-  # Redis para Firecrawl e cache do sistema
+  # Playwright service para Firecrawl
+  playwright-service:
+    image: browserless/chrome:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - MAX_CONCURRENT_SESSIONS=10
+      - CONNECTION_TIMEOUT=60000
+    networks:
+      - paraguai_network
+    restart: unless-stopped
+
+  # Redis para Firecrawl e cache
   redis:
     image: redis:7-alpine
     ports:
@@ -22,8 +39,10 @@ services:
       - redis_data:/data
     networks:
       - paraguai_network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
 
-  # MongoDB para armazenamento principal (NoSQL)
+  # MongoDB para armazenamento (NoSQL)
   mongodb:
     image: mongo:7-jammy
     ports:
@@ -36,36 +55,67 @@ services:
       - mongodb_data:/data/db
     networks:
       - paraguai_network
+    restart: unless-stopped
 
-  # Aplicação principal (Flask web interface)
-  web-app:
+  # Aplicação principal
+  paraguai-app:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
     environment:
-      - FIRECRAWL_API_KEY=local-instance
+      - FLASK_ENV=production
+      - FLASK_DEBUG=0
+      - HOST=0.0.0.0
+      - PORT=5000
+      
+      # Firecrawl local
+      - FIRECRAWL_API_KEY=local-instance-key
       - FIRECRAWL_BASE_URL=http://firecrawl:3002
+      
+      # OpenRouter IA (sua API key)
       - OPENROUTER_API_KEY=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
       - OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
       - OPENROUTER_MODEL=cognitivecomputations/dolphin-mistral-24b-venice-edition:free
+      
+      # Database
       - MONGO_URL=mongodb://admin:admin123@mongodb:27017/paraguai_db?authSource=admin
-      - REDIS_URL=redis://redis:6379
-      - FLASK_ENV=development
-      - FLASK_DEBUG=1
+      - SQLITE_DB=/app/data/app.db
+      
+      # Redis
+      - REDIS_URL=redis://redis:6379/1
+      
+      # Configurações gerais
+      - SITE_URL=http://localhost:5000
+      - SITE_NAME=Paraguai Price Extractor
+      - SCRAPING_DELAY=2
+      - MAX_RETRIES=3
+      - REQUEST_TIMEOUT=30
+      
     volumes:
-      - .:/app
+      - app_data:/app/data
+      - ./logs:/app/logs
     depends_on:
       - mongodb
       - redis
       - firecrawl
     networks:
       - paraguai_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   mongodb_data:
+    driver: local
   redis_data:
+    driver: local
+  app_data:
+    driver: local
 
 networks:
   paraguai_network:
