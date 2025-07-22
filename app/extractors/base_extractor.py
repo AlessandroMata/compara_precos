@@ -70,32 +70,74 @@ class BaseExtractor(ABC):
     
     def crawl_page(self, url: str, extract_options: Dict = None) -> Optional[Dict]:
         """
-        Usa Firecrawl para extrair dados de uma página
+        Usa Firecrawl para extrair dados de uma página, com fallback para requests
+        """
+        # Se Firecrawl estiver disponível, usar ele
+        if self.firecrawl_available:
+            try:
+                logger.info(f"Crawling page with Firecrawl: {url}")
+                
+                default_options = {
+                    'formats': ['markdown', 'html'],
+                    'includeTags': ['title', 'meta', 'h1', 'h2', 'h3', 'p', 'span', 'div', 'img'],
+                    'excludeTags': ['script', 'style', 'nav', 'footer', 'header'],
+                    'waitFor': 2000,
+                    'timeout': self.timeout * 1000
+                }
+                
+                if extract_options:
+                    default_options.update(extract_options)
+                
+                result = self.firecrawl.scrape_url(url, params=default_options)
+                
+                if result and 'success' in result and result['success']:
+                    return result['data']
+                else:
+                    logger.error(f"Failed to crawl {url} with Firecrawl: {result}")
+                    
+            except Exception as e:
+                logger.warning(f"Firecrawl failed for {url}: {str(e)}")
+        
+        # Fallback: usar requests + BeautifulSoup
+        return self._crawl_with_requests(url)
+    
+    def _crawl_with_requests(self, url: str) -> Optional[Dict]:
+        """
+        Fallback para web scraping usando requests + BeautifulSoup
         """
         try:
-            logger.info(f"Crawling page: {url}")
+            logger.info(f"Crawling page with requests fallback: {url}")
+            import requests
+            from bs4 import BeautifulSoup
             
-            default_options = {
-                'formats': ['markdown', 'html'],
-                'includeTags': ['title', 'meta', 'h1', 'h2', 'h3', 'p', 'span', 'div', 'img'],
-                'excludeTags': ['script', 'style', 'nav', 'footer', 'header'],
-                'waitFor': 2000,
-                'timeout': self.timeout * 1000
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
             }
             
-            if extract_options:
-                default_options.update(extract_options)
+            response = requests.get(url, headers=headers, timeout=self.timeout)
+            response.raise_for_status()
             
-            result = self.firecrawl.scrape_url(url, params=default_options)
+            soup = BeautifulSoup(response.content, 'html.parser')
             
-            if result and 'success' in result and result['success']:
-                return result['data']
-            else:
-                logger.error(f"Failed to crawl {url}: {result}")
-                return None
-                
+            # Remove elementos desnecessários
+            for element in soup(['script', 'style', 'nav', 'footer', 'header']):
+                element.decompose()
+            
+            # Extrai texto markdown simplificado
+            text_content = soup.get_text(separator='\n', strip=True)
+            
+            return {
+                'markdown': text_content,
+                'html': str(soup),
+                'metadata': {
+                    'title': soup.title.string if soup.title else '',
+                    'url': url,
+                    'statusCode': response.status_code
+                }
+            }
+            
         except Exception as e:
-            logger.error(f"Error crawling {url}: {str(e)}")
+            logger.error(f"Error in requests fallback for {url}: {str(e)}")
             return None
     
     def extract_with_ai(self, content: str, extraction_prompt: str) -> Optional[Dict]:
