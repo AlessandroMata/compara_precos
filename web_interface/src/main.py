@@ -69,9 +69,15 @@ if __name__ == '__main__':
     print("🚀 Iniciando Paraguai Price Extractor")
     print("=" * 50)
     print("📊 Sistema de análise de oportunidades")
-    print("🔐 Acesso: http://localhost:5000")
+    print("🔐 Acesso: http://0.0.0.0:5000")
     print("👤 Login padrão: admin / admin123")
     print("⚠️  ALTERE A SENHA EM PRODUÇÃO!")
     print("=" * 50)
     
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Configuração para aceitar conexões externas
+    import os
+    host = os.getenv('HOST', '0.0.0.0')
+    port = int(os.getenv('PORT', 5000))
+    debug = os.getenv('DEBUG', 'true').lower() == 'true'
+    
+    app.run(host=host, port=port, debug=debug, threaded=True)
