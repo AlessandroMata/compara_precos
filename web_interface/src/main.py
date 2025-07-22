@@ -1,0 +1,77 @@
+import os
+import sys
+# DON'T CHANGE THIS !!!
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
+from flask import Flask, send_from_directory, session
+from src.models.user import db as user_db
+from src.models.search_config import db as search_db
+from src.models.auth import db as auth_db, create_default_user
+from src.routes.user import user_bp
+from src.routes.auth import auth_bp
+from src.routes.search_wizard import search_wizard_bp
+
+app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
+app.config['SECRET_KEY'] = 'paraguai-price-extractor-2024-secret-key'
+
+# Configuração do banco de dados
+app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(os.path.dirname(__file__), 'database', 'app.db')}"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Configuração de sessão
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_TYPE'] = 'filesystem'
+
+# Registra blueprints
+app.register_blueprint(user_bp, url_prefix='/api')
+app.register_blueprint(auth_bp, url_prefix='/api/auth')
+app.register_blueprint(search_wizard_bp, url_prefix='/api/search-wizard')
+
+# Inicializa bancos de dados
+user_db.init_app(app)
+search_db.init_app(app)
+auth_db.init_app(app)
+
+with app.app_context():
+    # Cria todas as tabelas
+    user_db.create_all()
+    search_db.create_all()
+    auth_db.create_all()
+    
+    # Cria usuário padrão
+    create_default_user()
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    static_folder_path = app.static_folder
+    if static_folder_path is None:
+            return "Static folder not configured", 404
+
+    if path != "" and os.path.exists(os.path.join(static_folder_path, path)):
+        return send_from_directory(static_folder_path, path)
+    else:
+        index_path = os.path.join(static_folder_path, 'index.html')
+        if os.path.exists(index_path):
+            return send_from_directory(static_folder_path, 'index.html')
+        else:
+            return "index.html not found", 404
+
+@app.errorhandler(404)
+def not_found(error):
+    return send_from_directory(app.static_folder, 'index.html')
+
+@app.errorhandler(500)
+def internal_error(error):
+    return {"error": "Internal server error"}, 500
+
+if __name__ == '__main__':
+    print("🚀 Iniciando Paraguai Price Extractor")
+    print("=" * 50)
+    print("📊 Sistema de análise de oportunidades")
+    print("🔐 Acesso: http://localhost:5000")
+    print("👤 Login padrão: admin / admin123")
+    print("⚠️  ALTERE A SENHA EM PRODUÇÃO!")
+    print("=" * 50)
+    
+    app.run(host='0.0.0.0', port=5000, debug=True)
