@@ -16,11 +16,25 @@ class BaseExtractor(ABC):
     """Classe base para todos os extratores de sites paraguaios"""
     
     def __init__(self):
-        self.firecrawl = FirecrawlApp(api_key=os.getenv('FIRECRAWL_API_KEY'))
-        self.openai_client = OpenAI(
-            base_url=os.getenv('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1'),
-            api_key=os.getenv('OPENROUTER_API_KEY')
-        )
+        # Configuração para Firecrawl local ou externo
+        firecrawl_api_key = os.getenv('FIRECRAWL_API_KEY', 'local-instance')
+        firecrawl_base_url = os.getenv('FIRECRAWL_BASE_URL', 'http://localhost:3002')
+        
+        # Se tiver URL base personalizada, usar instância local
+        if firecrawl_base_url and firecrawl_base_url != 'https://api.firecrawl.dev':
+            self.firecrawl = FirecrawlApp(api_key=firecrawl_api_key, api_url=firecrawl_base_url)
+        else:
+            self.firecrawl = FirecrawlApp(api_key=firecrawl_api_key)
+            
+        # Cliente OpenAI/OpenRouter para análise IA (opcional)
+        openai_key = os.getenv('OPENROUTER_API_KEY')
+        if openai_key:
+            self.openai_client = OpenAI(
+                base_url=os.getenv('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1'),
+                api_key=openai_key
+            )
+        else:
+            self.openai_client = None
         self.ai_model = os.getenv('OPENROUTER_MODEL', 'cognitivecomputations/dolphin-mistral-24b-venice-edition:free')
         self.site_url = os.getenv('SITE_URL', 'https://paraguai-price-extractor.com')
         self.site_name = os.getenv('SITE_NAME', 'Paraguai Price Extractor')
