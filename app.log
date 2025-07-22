@@ -1,0 +1,32 @@
+2025-07-22 02:50:23,511 - main - INFO - Aplicação iniciada com logging configurado.
+2025-07-22 02:50:23,511 - main - INFO - Aplicação iniciada com logging configurado.
+2025-07-22 02:50:46,987 - main - INFO - Aplicação iniciada com logging configurado.
+2025-07-22 02:50:46,987 - main - INFO - Aplicação iniciada com logging configurado.
+2025-07-22 02:52:29,610 - main - INFO - Aplicação iniciada com logging configurado.
+2025-07-22 02:52:29,610 - main - INFO - Aplicação iniciada com logging configurado.
+2025-07-22 02:53:17,254 - main - INFO - Aplicação iniciada com logging configurado.
+2025-07-22 02:53:17,254 - main - INFO - Aplicação iniciada com logging configurado.
+2025-07-22 02:53:38,635 - main - INFO - Aplicação iniciada com logging configurado.
+2025-07-22 02:53:38,635 - main - INFO - Aplicação iniciada com logging configurado.
+2025-07-22 02:53:39,051 - app.extractors.base_extractor - INFO - Initializing Firecrawl for local development
+2025-07-22 02:53:39,051 - app.extractors.base_extractor - INFO - ✅ Firecrawl initialized successfully
+2025-07-22 02:53:39,051 - app.extractors.base_extractor - WARNING - ⚠️ OPENROUTER_API_KEY not found
+2025-07-22 02:53:39,051 - app.extractors.base_extractor - INFO - Initializing Firecrawl for local development
+2025-07-22 02:53:39,051 - app.extractors.base_extractor - INFO - ✅ Firecrawl initialized successfully
+2025-07-22 02:53:39,051 - app.extractors.base_extractor - WARNING - ⚠️ OPENROUTER_API_KEY not found
+2025-07-22 02:53:39,078 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.100.212:5000
+2025-07-22 02:53:39,078 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-07-22 02:53:39,079 - werkzeug - INFO -  * Restarting with stat
+2025-07-22 02:53:39,312 - main - INFO - Aplicação iniciada com logging configurado.
+2025-07-22 02:53:39,312 - main - INFO - Aplicação iniciada com logging configurado.
+2025-07-22 02:53:39,723 - app.extractors.base_extractor - INFO - Initializing Firecrawl for local development
+2025-07-22 02:53:39,723 - app.extractors.base_extractor - INFO - ✅ Firecrawl initialized successfully
+2025-07-22 02:53:39,754 - app.extractors.base_extractor - INFO - ✅ OpenRouter IA initialized successfully
+2025-07-22 02:53:39,754 - app.extractors.base_extractor - INFO - Initializing Firecrawl for local development
+2025-07-22 02:53:39,754 - app.extractors.base_extractor - INFO - ✅ Firecrawl initialized successfully
+2025-07-22 02:53:39,773 - app.extractors.base_extractor - INFO - ✅ OpenRouter IA initialized successfully
+2025-07-22 02:53:39,797 - werkzeug - WARNING -  * Debugger is active!
+2025-07-22 02:53:39,801 - werkzeug - INFO -  * Debugger PIN: 476-932-100

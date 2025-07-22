@@ -1,13 +1,44 @@
 import os
 import sys
+import logging
+from logging.handlers import RotatingFileHandler
 # DON'T CHANGE THIS !!!
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory, session
+from flask_cors import CORS
 from src.database import db
 from datetime import datetime
 
 app = Flask(__name__, static_folder=os.path.join(os.path.dirname(__file__), 'static'))
+
+# Configuração de Logging
+log_formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# Log para arquivo
+log_file = 'app.log'
+file_handler = RotatingFileHandler(log_file, maxBytes=1024 * 1024 * 5, backupCount=2) # 5 MB por arquivo
+file_handler.setFormatter(log_formatter)
+file_handler.setLevel(logging.INFO)
+
+# Log para console
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(log_formatter)
+console_handler.setLevel(logging.DEBUG)
+
+# Adiciona handlers ao logger da aplicação
+app.logger.addHandler(file_handler)
+app.logger.addHandler(console_handler)
+app.logger.setLevel(logging.DEBUG)
+
+# Adiciona handlers ao logger raiz para capturar logs de outras bibliotecas
+logging.getLogger().addHandler(console_handler)
+logging.getLogger().addHandler(file_handler)
+logging.getLogger().setLevel(logging.DEBUG)
+
+app.logger.info('Aplicação iniciada com logging configurado.')
+
+CORS(app, origins=["http://localhost:3000"])  # Permite CORS apenas do frontend local
 app.config['SECRET_KEY'] = 'paraguai-price-extractor-2024-secret-key'
 
 # Configuração do banco de dados

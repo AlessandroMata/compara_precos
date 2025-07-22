@@ -7,7 +7,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Any
 from datetime import datetime
-from firecrawl import FirecrawlApp
+from firecrawl.firecrawl import FirecrawlApp
 from openai import OpenAI
 
 logger = logging.getLogger(__name__)
