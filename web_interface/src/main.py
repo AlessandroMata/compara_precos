@@ -31,6 +31,17 @@ app.register_blueprint(user_bp, url_prefix='/api')
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(search_wizard_bp, url_prefix='/api/search-wizard')
 
+# Health check endpoint para Docker
+@app.route('/api/health')
+def health_check():
+    try:
+        # Verifica se o banco está funcionando
+        from src.models.auth import User
+        User.query.first()
+        return {"status": "healthy", "timestamp": datetime.now().isoformat()}, 200
+    except Exception as e:
+        return {"status": "unhealthy", "error": str(e)}, 500
+
 with app.app_context():
     # Importa e cria modelos
     from src.models.auth import User, Session, create_default_user
