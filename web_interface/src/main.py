@@ -4,9 +4,12 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from flask import Flask, send_from_directory, session
-from src.models.user import db as user_db
-from src.models.search_config import db as search_db
-from src.models.auth import db as auth_db, create_default_user
+from flask_sqlalchemy import SQLAlchemy
+
+# Instância única do SQLAlchemy
+db = SQLAlchemy()
+
+# Importa modelos após criar db
 from src.routes.user import user_bp
 from src.routes.auth import auth_bp
 from src.routes.search_wizard import search_wizard_bp
@@ -22,23 +25,20 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_TYPE'] = 'filesystem'
 
+# Inicializa banco de dados
+db.init_app(app)
+
 # Registra blueprints
 app.register_blueprint(user_bp, url_prefix='/api')
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
 app.register_blueprint(search_wizard_bp, url_prefix='/api/search-wizard')
 
-# Inicializa bancos de dados
-user_db.init_app(app)
-search_db.init_app(app)
-auth_db.init_app(app)
-
 with app.app_context():
     # Cria todas as tabelas
-    user_db.create_all()
-    search_db.create_all()
-    auth_db.create_all()
+    db.create_all()
     
     # Cria usuário padrão
+    from src.models.auth import create_default_user
     create_default_user()
 
 @app.route('/', defaults={'path': ''})
