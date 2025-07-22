@@ -6,7 +6,6 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
-    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar requirements primeiro (para cache do Docker)
@@ -16,7 +15,7 @@ COPY web_interface/requirements.txt ./web_interface/
 # Instalar dependências Python
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir -r web_interface/requirements.txt
-RUN pip install --no-cache-dir Pillow beautifulsoup4
+RUN pip install --no-cache-dir Pillow beautifulsoup4 pymongo
 
 # Copiar código da aplicação
 COPY . .
