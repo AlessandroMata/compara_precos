@@ -119,6 +119,16 @@ class BaseExtractor(ABC):
             
             soup = BeautifulSoup(response.content, 'html.parser')
             
+            # Extrai URLs de imagens
+            image_urls = []
+            for img in soup.find_all('img'):
+                img_src = img.get('src') or img.get('data-src')
+                if img_src:
+                    # Converte URLs relativas para absolutas
+                    from urllib.parse import urljoin
+                    absolute_url = urljoin(url, img_src)
+                    image_urls.append(absolute_url)
+            
             # Remove elementos desnecessários
             for element in soup(['script', 'style', 'nav', 'footer', 'header']):
                 element.decompose()
@@ -129,6 +139,7 @@ class BaseExtractor(ABC):
             return {
                 'markdown': text_content,
                 'html': str(soup),
+                'images': image_urls[:5],  # Máximo 5 imagens por produto
                 'metadata': {
                     'title': soup.title.string if soup.title else '',
                     'url': url,
